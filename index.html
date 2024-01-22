@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MODULE 01 – JAVASCRIPT</title>
+</head>
+
+<body>
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CRUD student</title>
+        <style>
+            body {
+                display: flex;
+                justify-content: space-around;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div style="border: groove; padding: 10px 10px 50px 10px;">
+            <h2 style="text-align: center;">Thông tin học viên</h2>
+            <div class="input-row">
+                <label for="fullName">Họ và tên</label>
+                <input style="width: 180px; height: 20px; margin-left: 22px;" type="text" id="fullName" placeholder="Vui lòng nhập họ và tên" autocomplete="off">
+            </div>
+            <br>
+            <div class="input-row">
+                <label for="email">Email</label>
+                <input style="width: 180px; height: 20px;margin-left: 46px;" type="email" id="email" placeholder="Vui lòng nhập email" autocomplete="off">
+            </div>
+            <br>
+            <div class="input-row">
+                <label for="phoneNumber">Số điện thoại</label>
+                <input style="width: 180px; height: 20px;" type="text" id="phoneNumber" placeholder="Vui lòng nhập số điện thoại" autocomplete="off">
+            </div>
+            <br>
+            <div class="input-row">
+                <label for="address">Quê quán</label>
+                <input style="width: 180px; height: 20px;margin-left: 23px;" type="text" id="address" placeholder="Vui lòng nhập quê quán" autocomplete="off">
+            </div>
+            <br>
+            <label for="gender">Giới tính</label>
+            <input type="radio" name="gender" id="male" value="Nam" checked='false'>Nam
+            <input type="radio" name="gender" id="female" value="Nữ">Nữ
+            <br>
+            <div style="text-align: center; margin-top: 20px;">
+                <button style="height: 30px;width: 200px;" onclick="save()" id="save">Lưu lại</button>
+            </div>
+        </div>
+        <div style="border: groove; padding: 10px;">
+            <h2 style="text-align: center;">Danh sách học viên</h2>
+            <label for="">Tìm kiếm học viên</label>
+            <input type="text" id="searchStudent">
+            <button onclick="search()" id="search">Search</button>
+
+            <table border="1" style="margin-top: 20px;">
+                <thead>
+                    <th>#</th>
+                    <th>Họ và tên</th>
+                    <th>Email</th>
+                    <th>Điện thoại</th>
+                    <th>Địa chỉ</th>
+                    <th>Giới tính</th>
+                    <th>Hành động</th>
+                    <th><button onclick="arrangeAnphaB()">sắp xếp(alpha b)</button></th>
+                </thead>
+                <tbody id="tableStudent">
+
+                </tbody>
+            </table>
+        </div>
+        <script>
+            // Tạo id
+            function uuid() {
+                return Math.floor(Math.random() * 9999999) + new Date().getMilliseconds();
+            }
+            // lấy dữ liệu trên mảng user trên local về
+            let students = JSON.parse(localStorage.getItem("dataStudent")) || [];
+
+            let isUpdate = -1;
+            function save() {
+                let fullName = document.getElementById("fullName").value;
+                let email = document.getElementById("email").value;
+                let phoneNumber = document.getElementById("phoneNumber").value;
+                let address = document.getElementById("address").value;
+                let gender = document.getElementsByName("gender");
+                let genderValue = ""
+                for (let i = 0; i < gender.length; i++) {
+                    if (gender.item(i).checked) {
+                        genderValue = gender.item(i).value;
+                    }
+                }
+
+                let student = {
+                    id: uuid(),
+                    fullName: fullName,
+                    email: email,
+                    phoneNumber: phoneNumber,
+                    address: address,
+                    gender: genderValue
+                }
+
+                let isValid = checkValidate();
+
+                if (isValid) {
+                    if (isUpdate != -1) {
+                        let updateIndex = students.findIndex((item) => {
+                            return item.id == isUpdate;
+                        })
+                        students.splice(updateIndex, 1, { ...student, id: isUpdate })
+                        localStorage.setItem("dataStudent", JSON.stringify(students))
+                        renderStudent(students)
+                        clear()
+                        isUpdate = -1
+                        return
+                    }
+                    students.push(student)
+                    // Sau khi push vào xong thì lưu dữ liệu trên local lại
+                    localStorage.setItem("dataStudent", JSON.stringify(students))
+
+                    renderStudent(students)
+                    clear()
+                }
+
+            }
+
+            function checkValidate() {
+                let fullName = document.getElementById("fullName").value;
+                let email = document.getElementById("email").value;
+                let phoneNumber = document.getElementById("phoneNumber").value;
+                let address = document.getElementById("address").value;
+
+                let isCheck = true;
+
+                // Kiểm tra trường username
+                if (fullName == '') {
+                    alert("Tên không được để trống")
+                    isCheck = false;
+                }
+                // Kiểm tra trường email
+                if (email == '') {
+                    alert("Email không được để trống")
+                    isCheck = false;
+                } else if (!isEmail(email)) {
+                    alert("Email không đúng định dạng")
+                    isCheck = false;
+                }
+
+                // Kiểm tra trường phone
+                if (phoneNumber == '') {
+                    alert("Số điện thoại không được để trống")
+                    isCheck = false;
+                } else if (!isPhone(phoneNumber)) {
+                    alert("Số điện thoại không đúng định dạng")
+                    isCheck = false;
+                }
+                if (address == '') {
+                    alert("Địa chỉ không được để trống")
+                    isCheck = false;
+                }
+                return isCheck;
+            }
+
+            function isEmail(email) {
+                return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+        email
+    );
+            }
+
+            function isPhone(number) {
+                return /(84|0)+([0-9]{9})\b/.test(number);
+            }
+
+            function clear() {
+                document.getElementById("fullName").value = ""
+                document.getElementById("email").value = ""
+                document.getElementById("phoneNumber").value = ""
+                document.getElementById("address").value = ""
+                document.getElementById("male").checked = true
+            }
+            function renderStudent(data) {
+                html = "";
+
+                for (let i = 0; i < data.length; i++) {
+                    html +=
+                        `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${data[i].fullName}</td>
+                        <td>${data[i].email}</td>
+                        <td>${data[i].phoneNumber}</td>
+                        <td>${data[i].address}</td>
+                        <td>${data[i].gender}</td>
+                        <td>
+                            <a onclick="editStudent(${data[i].id})" id="edit" href="#">Edit</a>
+                            <a onclick="deleteStudent(${data[i].id})" id="delete" href="#">Delete</a>
+                        </td>
+                    </tr>
+                `
+                }
+                document.getElementById("tableStudent").innerHTML = html;
+            }
+            renderStudent(students);
+
+            function deleteStudent(id) {
+                let confirmDelete = confirm("bạn có muốn xoá hay không");
+                if (!confirmDelete) {
+                    return
+                }
+                // tìm vị trí phần tử muốn xoá
+                let index = students.findIndex((item) => {
+                    return item.id == id
+                })
+                students.splice(index, 1);
+                localStorage.setItem("dataStudent", JSON.stringify(students));
+                // sau khi xoá song gọi lại hàm render
+                renderStudent(students)
+            }
+
+            //Edit 
+            function editStudent(id) {
+                let index = students.findIndex((item) => {
+                    return item.id == id
+                })
+                isUpdate = id;
+
+                for (let i = 0; i < students.length; i++) {
+                    if (students[i].id == id) {
+                        document.getElementById('fullName').value = students[i].fullName;
+                        document.getElementById('email').value = students[i].email;
+                        document.getElementById('phoneNumber').value = students[i].phoneNumber;
+                        document.getElementById('address').value = students[i].address;
+                        if (students[i].gender == "Nam") {
+                            document.getElementById("male").checked = true
+                        } else {
+                            delete document.getElementById("male").checked
+                            document.getElementById("female").checked = true
+                        }
+                    }
+                    // students[i].fullName = document.getElementById("fullName").value;
+                    // localStorage.setItem()
+                }
+
+            }
+
+            // Hàm sắp xếp theo Anpha b
+            function arrangeAnphaB() {
+                let temp = ""
+                for (let i = 0; i < students.length; i++) {
+                    for (let j = i + 1; j < students.length; j++) {
+                        if (students[i].fullName.localeCompare(students[j].fullName) > 0) {
+                            temp = students[i];
+                            students[i] = students[j];
+                            students[j] = temp;
+                        }
+                    }
+                }
+                localStorage.setItem("dataStudent", JSON.stringify(students));
+                renderStudent(students)
+            }
+
+            // Tìm kiếm
+            function search() {
+                let searchStudent = document.getElementById("searchStudent").value
+                let kqSearch = students.filter((item) => {
+                    return item.fullName.indexOf(searchStudent) != -1;
+                })
+                renderStudent(kqSearch)
+            }
+
+        </script>
+    </body>
+
+    </html>
+</body>
+
+</html>
